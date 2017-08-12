@@ -176,6 +176,50 @@ def heapify(x):
     for i in reversed(range(n//2)):
         _siftup(x, i)
 
+
+def heapfix(heap, pos):
+    """Re-establish heap invariant after item at index 'pos' has changed.
+
+    Time complexity is O(len(heap)). This is efficient than calling heapify()
+    every time an item changes its value since heapify() performs _siftup()
+    operation on half of the items in the heap, which is unnecessary when we
+    know exactly which element is not at its right place.
+    """
+    # Check if _siftup() succeeds i.e. it moved the item to its correct place
+    # because it was greater than its smaller child (and the child's children
+    # etc). If _siftup() didn't succeed, it means the item *might* move up
+    # using _siftdown(). _siftdown() doesn't move the item up if it is already
+    # in its correct position.
+    if not _siftup(heap, pos):
+        _siftdown(heap, 0, pos)
+
+
+def heapremove(heap, pos):
+    """Remove the item at index 'pos' from the heap.
+
+    Maintains heap invariant after item removal. Time complexity is
+    O(len(heap)).
+
+    Note: Negative 'pos' value is treated as negative index value in list
+    slicing notation i.e. it is counted from the end of the heap.
+    """
+    n = len(heap) - 1
+    # If index position is 0, just use the heappop() method.
+    if pos == 0:
+        return heappop(heap)
+    if pos != n:
+        # Exchange the item at given index with the last element, pop the
+        # exchanged item at the end of the heap and call heapfix() on the
+        # previous last element now at 'pos', which is out of place.
+        heap[pos], heap[n] = heap[n], heap[pos]
+        result = heap.pop()
+        heapfix(heap, pos)
+    else:
+        # If index position is the last index, simply pop that item from the
+        # heap.
+        result = heap.pop()
+    return result
+
 def _heappop_max(heap):
     """Maxheap version of a heappop."""
     lastelt = heap.pop()    # raises appropriate IndexError if heap is empty
@@ -215,6 +259,8 @@ def _siftdown(heap, startpos, pos):
             continue
         break
     heap[pos] = newitem
+    # Return the final position where newitem was inserted.
+    return pos
 
 # The child indices of heap index pos are already heaps, and we want to make
 # a heap at index pos too.  We do this by bubbling the smaller child of
@@ -257,7 +303,7 @@ def _siftdown(heap, startpos, pos):
 
 def _siftup(heap, pos):
     endpos = len(heap)
-    startpos = pos
+    startpos = origpos = pos
     newitem = heap[pos]
     # Bubble up the smaller child until hitting a leaf.
     childpos = 2*pos + 1    # leftmost child position
@@ -273,7 +319,12 @@ def _siftup(heap, pos):
     # The leaf at pos is empty now.  Put newitem there, and bubble it up
     # to its final resting place (by sifting its parents down).
     heap[pos] = newitem
-    _siftdown(heap, startpos, pos)
+    # Get the position where newitem was inserted and return if the new item
+    # moved down the heap from its original (temporary) position because it
+    # was greater than its smaller child (and the child's children etc). This
+    # is determined by checking if newpos > origpos.
+    newpos = _siftdown(heap, startpos, pos)
+    return newpos > origpos
 
 def _siftdown_max(heap, startpos, pos):
     'Maxheap variant of _siftdown'

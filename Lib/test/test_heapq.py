@@ -135,6 +135,54 @@ class TestHeap:
         x = self.module.heappushpop(h, 11)
         self.assertEqual((h, x), ([11], 10))
 
+    def make_heap(self, size=256):
+        heap = [random.randrange(2000) for i in range(size)]
+        self.module.heapify(heap)
+        return heap
+
+    def test_siftup_returns_true(self):
+        # Item at index 0 is out of place; check if it is pushed down.
+        heap = [11, 1, 6, 5, 2, 8, 10, 9]
+        self.assertEqual(True, self.module._siftup(heap, 0))
+        self.check_invariant(heap)
+
+    def test_siftup_returns_false(self):
+        heap = self.make_heap(size=10)
+        self.assertEqual(False, self.module._siftup(heap, 0))
+        self.check_invariant(heap)
+
+    def test_siftdown_returns_position(self):
+        # Last item is out of place; check if it is pushed up.
+        heap = [1, 2, 6, 5, 11, 8, 10, 9, 0]
+        self.assertEqual(0, self.module._siftdown(heap, 0, len(heap) - 1))
+        self.check_invariant(heap)
+
+    def test_heapfix(self):
+        n = range(256)
+        heap = self.make_heap(size=256)
+        for i in range(100):
+            index = random.choice(n)
+            heap[index] = random.randrange(2000)
+            self.module.heapfix(heap, index)
+            self.check_invariant(heap)
+
+    def test_heapfix_raises_indexerror(self):
+        heap = self.make_heap(size=10)
+        self.assertRaises(IndexError, self.module.heapfix, heap, 10)
+
+    def test_heapremove(self):
+        n = range(256)
+        heap = self.make_heap(size=256)
+        for i in n:
+            index = random.choice(range(len(heap)))
+            self.module.heapremove(heap, index)
+            self.check_invariant(heap)
+        self.assertEqual([], heap)
+
+    def test_heapremove_raises_indexerror(self):
+        heap = self.make_heap(size=10)
+        self.assertRaises(IndexError, self.module.heapremove, heap, 10)
+
     def test_heapsort(self):
         # Exercise everything with repeated heapsort checks
         for trial in range(100):
